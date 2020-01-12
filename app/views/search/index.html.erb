@@ -2,10 +2,223 @@
 <!--This would go here at the top of this page. Put it there to clean up duplication-->
 <!--since it's required on both placements/show, and here.-->
 
-<%#= javascript_include_tag 'https://maps.googleapis.com/maps/api/js?key='+Rails.application.credentials.google_maps_api_key %>
+<%= javascript_include_tag "https://maps.googleapis.com/maps/api/js?key=+Rails.application.credentials.google_maps_api_key" %>
 <script src="//cdn.rawgit.com/mahnunchik/markerclustererplus/master/dist/markerclusterer.min.js"></script>
 <script src='//cdn.rawgit.com/printercu/google-maps-utility-library-v3-read-only/master/infobox/src/infobox_packed.js' type='text/javascript'></script>
 
+<head>
+<style>
+img.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  width: 200px;
+}
+</style>
+</head>
+
+<!--New style for search page. -->
+<form action="/" method="get">
+  <div class='row form-group'>
+    <div class='col-12'>
+      <input type="text" name="query" id="query" placeholder=
+      "Search for placements by name, address, county, license-holder, MCO or hospital catchment">
+    </div>
+  </div>
+  
+  <div class='row form-group'>
+    <div class='col'>
+        <select class='shadow custom-select col mr-1 ml-5' name="filtercounty" id="filtercounty">
+          <option value="">County</option>
+          <%= @counties.each do |c| %>
+          <option value="<%= c.id %>"><%= c.name %></option> 
+          <% end %>
+        </select>
+    </div>
+    
+    <div class='col'>
+      <select class='shadow custom-select col mr-5 ml-1' name="filterservice" id="filterservice">
+        <option value="">License Type</option>
+        <%= @services.each do |s| %>
+          <option value="<%= s.id %>"><%= s.name %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class='col'>
+      <select class='shadow custom-select' name='filtermco' id='filtermco'>
+        <option value="">MCO</option>    
+        <option value="Alliance">Alliance</option>
+        <option value="Cardinal">Cardinal</option>
+        <option value="Eastpointe">Eastpointe</option>
+        <option value="Partners">Partners</option>
+        <option value="Sandhills">Sandhills</option>
+        <option value="Trillium">Trillium</option>
+        <option value="Vaya">Vaya</option>
+      </select>
+    </div>
+    
+    <div class='col'>
+      <select class='shadow custom-select' name='filterhospital' id='filterhospital'>
+        <option value="">Hospital</option>    
+        <option value="Broughton">Broughton</option>
+        <option value="CRH">Central Regional</option>
+        <option value="Cherry">Cherry</option>
+      </select>
+    </div>
+    
+    <div class='col'>
+      <input type="submit" value="Go", class='btn btn-search'>
+      <input type="reset" value="Reset Form" class='btn btn-info'/>
+    </div>
+</form>
+
+    <div class='col'>
+      <button data-toggle="collapse" data-target="#tips" class='btn btn-info mb-1 col-4'>Search Tips</button>
+        <div id='tips' class='collapse'>
+          <div class='card-body p-2 text-secondary text-left'>
+            <p class='mb-0'>- Type a general query into the search bar and/or choose
+              filters to browse by category. 
+            <br>- MCOs and hospitals are linked to a specific county, so adding conflicting 
+              filters may not elicit any results.
+            <br>- Partial words can be found, misspellings cannot.
+            <br>- For a list of all placements, leave form blank and click "Go." 
+            <br>- Adding more than 100 placements to your cart at a time may cause an error.</p>
+          </div>
+        </div>
+    </div>
+</div>
+
+<% if (params[:filtercounty] || params[:filterservice] || params[:query] || 
+params[:filtermco] || params[:filterhospital]) %> 
+
+<div class='row'>
+  <h3 class='page-header'> (<%= @placements.count %> Results): 
+    Click on a placement name to view details like referral contact and map
+  </h3>
+</div>
+
+<div class='row col-8 mx-auto rounded shadow text-white'>
+  <p class='col'>Search: 
+    <% if params[:query] != "" %> 
+      "<%= params[:query] %>"
+    <% else %>
+      None
+    <% end %>
+  </p>
+  <p class='col'>County: 
+    <% if @counties.find_by(id: params[:filtercounty]) != nil %>
+      <%= @counties.find_by(id: params[:filtercounty]).name %>
+    <% else %>
+      Any
+    <% end %>
+  </p>
+  <p class='col'>Hospital: 
+    <% if @counties.find_by(hospital: params[:filterhospital]) != nil %>
+      <%= @counties.find_by(hospital: params[:filterhospital]).hospital %></p>
+    <% else %>
+      Any
+    <% end %>
+  </p>
+  <%= link_to 'Add all to Cart', add_all_to_carts_path(
+  placement_ids: @placements.ids), method: :get, 
+  class: 'btn btn-standard mb-4 col-6 font-weight-bold p-2' %>
+</div>
+
+<div class="row">
+ <div class='col-6'>
+  <div class="row row-cols-1 row-cols-md-2">
+    <% @placements.each do |p| %>
+      <div class="col-sm-4">
+        <div class="card">
+          <div class="card-body">
+            <p class="card-title"><%= link_to p.name, placement_path(p.id)%></p>
+            <p><%= p.address %></p>
+            <p><%= p.city %>, <%= p.state %> <%= p.zip %></p>
+            <%= link_to 'Add to Cart', add_carts_path(placement_id: p.id), method: :post, class: 'btn btn-search mt-3' %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+ </div>
+  
+  <div class='col-6 sticky'>
+    <!--Javascript code to display map of all placements on search index page. -->
+    <div class='container-fluid'>
+      <div class='card'>
+        <div class='card-body'>
+          <div id='map'></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% end %>
+
+
+
+<!--Code for map with multiple markers. Pulls from search index in controller.-->
+<script type="text/javascript">
+  handler = Gmaps.build('Google');
+  handler.buildMap({ provider: {}, internal: {id: 'map'}}, function(){
+  markers = handler.addMarkers(<%=raw @hash.to_json %>);
+  handler.bounds.extendWith(markers);
+  handler.fitMapToBounds();
+});
+</script>
+
+  <% if false %>      
+    <div class='card col-8 mx-auto rounded shadow text-white'>
+      <p class='my-3 font-weight-bold'>Click on a placement name to view details like referral contact and map</p>
+      <div class='card-body p-2 rounded'>
+        <div class='row mx-2'>
+        <p class='col'>Search: 
+        <% if params[:query] != "" %> 
+          "<%= params[:query] %>"
+        <% else %>
+          None
+        <% end %>
+        </p>
+        <p class='col'>County: 
+    
+        <% if @counties.find_by(id: params[:filtercounty]) != nil %>
+          <%= @counties.find_by(id: params[:filtercounty]).name %>
+        <% else %>
+          Any
+        <% end %>
+        </p>
+        <p class='col'>License Type: 
+        <% if @services.find_by(id: params[:filterservice]) != nil %>
+          <%= @services.find_by(id: params[:filterservice]).name %></p>
+        <% else %>
+          Any
+        <% end %>
+        </p>
+        <p class='col'>MCO: 
+        <% if @counties.find_by(mco: params[:filtermco]) != nil %>
+          <%= @counties.find_by(mco: params[:filtermco]).mco %></p>
+        <% else %>
+          Any
+        <% end %>
+        </p>
+        <p class='col'>Hospital: 
+        <% if @counties.find_by(hospital: params[:filterhospital]) != nil %>
+          <%= @counties.find_by(hospital: params[:filterhospital]).hospital %></p>
+        <% else %>
+          Any
+        <% end %>
+        </p>
+        </div>
+    
+        <%= link_to 'Add all to Cart', add_all_to_carts_path(
+        placement_ids: @placements.ids), method: :get, 
+        class: 'btn btn-standard mb-4 col-6 font-weight-bold p-2' %>
+  <% end %>
+
+<!--Commenting out old code for search page style-->
+<% if false %>
 <div class='card rounded mt-4 shadow-sm p-4 col-8'>
   <div class='card-body text-white'>
   
@@ -76,108 +289,4 @@
   </div>
 
 </div>
-
-
-<% if (params[:filtercounty] || params[:filterservice] || params[:query] || 
-params[:filtermco] || params[:filterhospital]) %> 
-
-
-<h3 class='page-header'> <%= @placements.count %> Results</h3>
-
-<!--Javascript code to display map of all placements on search index page. -->
-<div class='container-fluid'>
-  
-<div class='row'>
-  <div class='card col-8 mx-auto my-auto pt-2 rounded shadow'>
-    <div class='card-body p-2 rounded'>
-      <div id='map' class='mb-3'></div>
-    </div>
-  </div>
-</div>
-
-  
-  <br>
-  
-<div class='row'>
-  
-    <div class='card col-8 mx-auto rounded shadow text-white'>
-      <p class='my-3 font-weight-bold'>Click on a placement name to view details like referral contact and map</p>
-      <div class='card-body p-2 rounded'>
-        <div class='row mx-2'>
-        <p class='col'>Search: 
-        <% if params[:query] != "" %> 
-          "<%= params[:query] %>"
-        <% else %>
-          None
-        <% end %>
-        </p>
-        <p class='col'>County: 
-    
-        <% if @counties.find_by(id: params[:filtercounty]) != nil %>
-          <%= @counties.find_by(id: params[:filtercounty]).name %>
-        <% else %>
-          Any
-        <% end %>
-        </p>
-        <p class='col'>License Type: 
-        <% if @services.find_by(id: params[:filterservice]) != nil %>
-          <%= @services.find_by(id: params[:filterservice]).name %></p>
-        <% else %>
-          Any
-        <% end %>
-        </p>
-        <p class='col'>MCO: 
-        <% if @counties.find_by(mco: params[:filtermco]) != nil %>
-          <%= @counties.find_by(mco: params[:filtermco]).mco %></p>
-        <% else %>
-          Any
-        <% end %>
-        </p>
-        <p class='col'>Hospital: 
-        <% if @counties.find_by(hospital: params[:filterhospital]) != nil %>
-          <%= @counties.find_by(hospital: params[:filterhospital]).hospital %></p>
-        <% else %>
-          Any
-        <% end %>
-        </p>
-        </div>
-    
-        <%= link_to 'Add all to Cart', add_all_to_carts_path(
-        placement_ids: @placements.ids), method: :get, 
-        class: 'btn btn-standard mb-4 col-6 font-weight-bold p-2' %>
-        
-        <% @placements.each do |p| %>
-          <ul class='list-group col-11 mx-auto'>
-            <li class='list-group-item my-2 mx-2 shadow rounded'>
-              <div class='row'>
-              <div class='col'>
-              <%= link_to p.name, placement_path(p.id), 
-              class: 'btn btn-info border-primary font-weight-bold' %>
-              <br>
-              <%= p.address %>, <%= p.city %>, <%= p.state %> <%= p.zip %>
-              </div>
-              <div class='col'>
-              <%= link_to 'Add to Cart', add_carts_path(placement_id: p.id), 
-              method: :post, class: 'btn btn-search mt-3' %>
-              </div>
-              </div>
-            </li>
-          </ul>
-        <% end %>
-      </div>
-  </div>
-</div>
-</div>
 <% end %>
-
-
-<!--Code for map with multiple markers. Pulls from search index in controller.-->
-<script type="text/javascript">
-  handler = Gmaps.build('Google');
-  handler.buildMap({ provider: {}, internal: {id: 'map'}}, function(){
-  markers = handler.addMarkers(<%=raw @hash.to_json %>);
-  handler.bounds.extendWith(markers);
-  handler.fitMapToBounds();
-});
-</script>
-

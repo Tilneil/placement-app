@@ -170,14 +170,14 @@ body {
   margin-top: 10px;
 }
 
-.card {
-  background: rgba(0, 0, 0, 0.9);
-}
+/*.card {*/
+/*  background: rgba(0, 0, 0, 0.9);*/
+/*}*/
 
-.card-body {
-  background: rgba(0, 0, 0, 0.9);
-  padding: 1px 2px 2px 2px;
-}
+/*.card-body {*/
+/*  background: rgba(0, 0, 0, 0.9);*/
+/*  padding: 1px 2px 2px 2px;*/
+/*}*/
 
 .list-group{
   background: #DDDDDD; 
