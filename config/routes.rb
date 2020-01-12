@@ -4,7 +4,6 @@ Rails.application.routes.draw do
   get 'info' => 'application#info'
   delete 'admins/:id', to: 'admins#destroy', as: :admin_destroy_user
   get 'admins' => 'admins#index'
-  
   devise_for :users, :controllers => {:registrations => "users/registrations"} 
   
   resources :search, only: [:index]

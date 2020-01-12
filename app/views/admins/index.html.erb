@@ -65,6 +65,7 @@
           <div class="col ">
             <h5 class="title2">Manage Placements</h5>
               <ul>
+                <li><%= link_to 'View All Placements', placements_path, class:"text-secondary font-weight-bold"%></li>
                 <li><%= link_to 'Create New Placement', new_placement_path, class:"text-secondary font-weight-bold" %></li>
                 <li><%= link_to 'Upload Placements', new_placements_import_path, class:"text-secondary font-weight-bold" %></li>
                 <li><%= link_to 'Download Placements', placements_path(format: :xlsx), class:"text-secondary font-weight-bold" %></li>
@@ -81,7 +82,7 @@
 <div>
 <%= render 'navbar' %>
 </div>
-
 <% end %>
+
 
 
